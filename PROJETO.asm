@@ -1,3 +1,7 @@
+;GRUPO: 
+;BRUNO LENITTA MACHADO RA:23004288  
+;LUIGI SHIMABUKURO PASTOR RA:23002634
+
 .MODEL SMALL
 
 PULA_LINHA MACRO
@@ -50,7 +54,7 @@ RETIRA_ENTER MACRO
     MOV DL, [BX]
     INC BX
     ADD BX, DX
-    MOV DL, '$'
+    MOV DL, ' '
 
     MOV [BX], DL
 
@@ -63,7 +67,7 @@ ENDM
 
 .DATA
     ; Numero de caracteres por nome = 15; ? = Numeros de caracteres digiados; 15 dup('$') = Preenche o que não foi digitado com sifrão; 4 dup (?) = Guarda os valores das provas e da média em binário
-    DADOS db  5 dup(15, ?, 15 dup('$'),'$', 4 dup (?)) 
+    DADOS db  5 dup(15, ?, 15 dup(' '), '$', 4 dup (?)) 
 
     msg1 db "INSIRA O NOME DO ALUNO:$"
 
@@ -79,25 +83,35 @@ ENDM
              db 10,13,"2 - Editar Nomes"
              db 10,13,"0 - Retornar ao Menu Principal$", 10,13
 
-    PESQUISA_GERAL db 15, ?, 15 dup(' ')
+    PESQUISA_GERAL db 15, ?, 15 dup('$'), '$'
 
     LIMPA_VETOR db 15 dup(' ')
 
-    EDITA_NOTA db "Que prova deseja editar"
+    EDITA_NOTA db 10,13,"Que prova deseja editar"
             db 10,13,"1 - P1"
             db 10,13,"2 - P2"
             db 10,13,"3 - P3$"
     OPCAO db "Escolha uma opcao:$"
+
     ESPACAMENTO db ' $'
 
+    TITULO db  'NOME',12 DUP (' '),'P1 ','P2 ','P3 ', 'MF$'
+
+    NOME db 10,13, "Insira o nome do aluno que deseja alterar a nota:$"
+
+    SELECT_ALUNO db 10,13, "Qual aluno voce deseja editar?"
+                 db 10,13, "Insira o ID do aluno (1 a 5):$"
+    NOVA_NOTA db "Insira a nova nota da prova:$"
+    NOVO_NOME db "Insira o novo nome do aluno:$"
 .CODE
 
 MAIN PROC
     ;Inicia os segmentos (data e extra)
-    MOV AX ,@DATA 
-    MOV DS,AX      
+    MOV AX, @DATA 
+    MOV DS, AX      
     MOV ES, AX
-
+    MOV AX, 0003H
+    INT 10H
     ;Zera BX para garantir que a matriz estará no elemento 0,0 quando for iniciada
     XOR BX, BX     
     ;Seta o contador em 5 (numero de alunos)    
@@ -117,6 +131,11 @@ MAIN PROC
      
         CALL LEH_NOME
     
+        PUSH BX
+        LEA BX, DADOS + BX
+        RETIRA_ENTER
+        POP BX
+
         PULA_LINHA
         ;Guarda o valor atual de CX para que nao seja perdido
         PUSH CX       
@@ -125,7 +144,7 @@ MAIN PROC
         ;Guarda o valor de BX na pilha
         PUSH BX      
         ;Aponta para a posicao da matriz que se encontra a primeira nota              
-        MOV SI, 15              
+        MOV SI, 18        
         ;Devolve o valor de BX
         POP BX             
 
@@ -134,7 +153,7 @@ MAIN PROC
          
             LEA DX, msg2
             PRINT
-           
+            
             CALL LEH_NOTA
         
         LOOP LEITURA_NOTA
@@ -173,7 +192,7 @@ MAIN PROC
                 JZ TABELA
 
                 CMP AL, '0'
-                JZ SAIR
+                JZ SAIR_EXTRA
 
             JMP SELECIONAR_OPCAO
 
@@ -208,28 +227,28 @@ MAIN PROC
                         JZ CHAMADA_DE_MENU
 
                     JMP SELECIONAR_PESQUISA
-
+                    SAIR_EXTRA:
+                    JMP SAIR
                         EDITAR_NOTA:
-        	                ;Aponta para o vetor que fara a pesquisa do nome na matriz DADOS, le o nome que ele deve procurar na matriz e depois chama a funcao que fara a edicao na nota
+        	                
+                            PULA_LINHA
+                            ;Aponta para o vetor que fara a pesquisa do nome na matriz DADOS, le o nome que ele deve procurar na matriz e depois chama a funcao que fara a edicao na nota
                             LEA DX, PESQUISA_GERAL
-                            CALL LEH_NOME
-                            INC DX
-
                             CALL PESQUISA_NOTA
 
                         JMP CHAMADA_DE_MENU
 
                         EDITAR_NOME:
+                            
+                            PULA_LINHA
                             ;Aponta para o vetor que fara a pesquisa do nome na matriz DADOS, le o nome que ele deve procurar na matriz e depois chama a funcao que fara a edicao do nome
                             LEA DX, PESQUISA_GERAL
-                            CALL LEH_NOME
-                            INC DX
-
                             CALL PESQUISA_NOME
                         JMP CHAMADA_DE_MENU
 
                 TABELA:
-                    ;Chama a funcao que imprimirá a tabela
+                    
+                    PULA_LINHA
                     PULA_LINHA
 
                     CALL IMPRIME_TABELA
@@ -244,7 +263,7 @@ MAIN PROC
 MAIN ENDP
 
 LEH_NOME PROC
-    ;Guarda o valor de AX na pilha
+
     PUSH AX
     ;Faz a leitura da string 
     MOV AH, 0AH
@@ -257,9 +276,10 @@ LEH_NOME PROC
 LEH_NOME ENDP
 
 LEH_NOTA PROC
-    ;Guarda o valor de BX na pilha
+
     PUSH BX
     ;Aponta para BX o elemento da matriz que será usado para guardar a nota
+    
     LEA BX, DADOS + BX
 
     CALL ENTRADA_NUM
@@ -276,11 +296,9 @@ LEH_NOTA ENDP
 
 ENTRADA_NUM PROC
 
-    ;Guarda o valor de SI na pilha
+
     PUSH SI
-    ;Guarda o valor de BX na pilha
     PUSH BX
-    ;Zera BX para nao conter lixo
     XOR BX, BX                                 
 
     RECEBEDEC:
@@ -331,7 +349,7 @@ MEDIA PROC
     ;Guarda o valor de BX
     PUSH BX                 
     ;Faz com que SI esteja na posicao da primeira nota    
-    MOV SI, 15              
+    MOV SI, 18             
     ;Devolve o valor de BX
     POP BX             
     ;Zera AX para que nao tenha lixo
@@ -371,21 +389,24 @@ MEDIA PROC
 MEDIA ENDP
 
 IMPRIME_TABELA PROC 
-
     PUSH AX
     PUSH BX
     PUSH CX
     PUSH DX
     PUSH SI
-
     ;Aponta BX para DADOS
     LEA BX, DADOS
     ;Seta o contador em 5, numero de linhas da matriz
     MOV CX, 5
+    LEA DX, TITULO
+    PRINT
 
+    PULA_LINHA
+    
     SAIDA_DE_LINHA:
+
         ;Aponta SI para o valor da primera nota que será impressa
-        MOV SI, 15
+        MOV SI, 18
         ;Move o valor do elemento da matriz para imprimir o nome guardado naquela posição
         MOV DX, BX
         ADD DX, 2
@@ -393,6 +414,8 @@ IMPRIME_TABELA PROC
         MOV AH, 09
         ;Imprime o nome
         INT 21H
+
+        ESPACO
 
         ;Guarda o contador de linhas
         PUSH CX
@@ -404,7 +427,7 @@ IMPRIME_TABELA PROC
             CALL SAIDA_DECIMAL
 
             ESPACO
-
+            ESPACO
             INC SI
 
         LOOP SAIDA_DE_NOTA
@@ -412,14 +435,15 @@ IMPRIME_TABELA PROC
         POP CX
         ;Pula para a próxima linha da matriz
         ADD BX, 22
+        
         PULA_LINHA
 
     LOOP SAIDA_DE_LINHA
 
     POP SI
-    POP DX
+    POP DX 
     POP CX
-    POP BX 
+    POP BX
     POP AX
 
     RET
@@ -477,53 +501,67 @@ SAIDA_DECIMAL PROC
 SAIDA_DECIMAL ENDP
 
 PESQUISA_NOME PROC
-    ;Guarda os valores dos registradores
+
     PUSH AX
     PUSH BX
-    PUSH CX
     PUSH DX
-    PUSH DI
     PUSH SI
+    PUSH DI
 
-    XOR AL, AL
-    ;Contador usado para comparar todos os 5 nomes da matriz com o que foi digitado
-    MOV CX, 5
+    LEA DX, SELECT_ALUNO
+    PRINT
 
     XOR BX, BX
 
+    MOV AH, 01
+
     PESQUISA_DE_NOME:
-        PUSH DX
-        ;Guarda o contador
-        PUSH CX
+        INT 21H
 
-        ;Aponta para o que foi digitado para pesquisa pelo usuário
-        LEA SI, PESQUISA_GERAL + 2
-        LEA DI, DADOS + BX
-        ADD DI, 2
+        CMP AL, '1'
+        JZ UM
+        CMP AL, '2'
+        JZ DOIS
+        CMP AL, '3'
+        JZ TRES
+        CMP AL, '4'
+        JZ QUATRO
+        CMP AL, '5'
+        JZ CINCO
 
-        PUSH BX
-        MOV BX, DX
-        MOV CL, [BX]
-        POP BX
+    JMP PESQUISA_DE_NOME
 
-        ;Compara a string armazenada dígito por dígito com a que foi digitada pelo usuário
-        REPE CMPSB
-        JNZ STR_NAO_EH_IGUAL
+        UM:
+        LEA BX, DADOS + 0
+        JMP APAGA 
 
+        DOIS:
+        LEA BX, DADOS + 22
+        JMP APAGA 
+
+        TRES:
+        LEA BX, DADOS + 44
+        JMP APAGA 
+
+        QUATRO:
+        LEA BX, DADOS + 66
+        JMP APAGA 
+
+        CINCO:
+        LEA BX, DADOS + 88
+
+        APAGA:
         ;O segmento a seguir limpa a parte da matriz com o nome comparado para o input ser refeito pelo usuário
         LEA SI, LIMPA_VETOR
 
         LEA DI, DADOS + BX
         ADD DI, 2
 
-        PUSH BX
-        MOV BX, DX
-        MOV CL, [BX]
-        POP BX
-
         ;Limpa o nome que estava armazenado com um vetor vazio
         REP MOVSB
-
+        PULA_LINHA
+        LEA DX, NOVO_NOME
+        PRINT
         LEA DX, DADOS + BX
         CALL LEH_NOME
 
@@ -532,92 +570,85 @@ PESQUISA_NOME PROC
 
         RETIRA_ENTER
 
+                
         POP BX
-
-        JMP PROXIMA_LINHA
-
-        ;Caso ela não seja exatamente igual com a linha que está sendo comparada, passa para a próxima até que a matriz armazenada acabe
-        STR_NAO_EH_IGUAL:
-
-            INC AL
-
-        PROXIMA_LINHA:
-
-            ADD BX, 22
-            POP CX
-            POP DX
-
-    LOOP PESQUISA_DE_NOME
-    ;Checa se todas as linhas da matriz com nomes foram comparadas
-    CMP AL, 5
-    JNE FINAL_DA_PESQUISA
-
-
-    FINAL_DA_PESQUISA:
-        ;Retorna os valores dos registradores
-        POP SI
-        POP DI
-        POP DX
-        POP CX
-        POP BX
-        POP AX
+        
+    POP DI
+    POP SI
+    POP DX
+    POP BX
+    POP AX
 
     RET
 
 PESQUISA_NOME ENDP
 
 PESQUISA_NOTA PROC
-    ;O procedimento de pesquisa de nota primeiramente funciona como uma pesquisa por nome, depois de achar o respectivo aluno, uma prova específica deverá ser editada
-
-   ;Guarda os valores dos registradores
+    ;Guarda o valor dos registradores
     PUSH AX
     PUSH BX
-    PUSH CX
     PUSH DX
-    PUSH DI
     PUSH SI
+    
+    LEA DX, SELECT_ALUNO
+    PRINT
 
-    XOR AL, AL
-    ;Contador usado para comparar todos os 5 nomes da matriz com o que foi digitado
-    MOV CX, 5
-                
     XOR BX, BX
 
+    MOV AH, 01
+
     PESQUISA_DE_NOTA:
+    
+       INT 21H
 
-        PUSH DX
-        ;Salva o valor do contador de linhas
-        PUSH CX
-        ;Aponta para o que foi digitado para pesquisa pelo usuário
-        LEA SI, PESQUISA_GERAL + 2
-        LEA DI, DADOS + BX
-        ADD DI, 2
-                    
-        PUSH BX
-        MOV BX, DX
-        MOV CL, [BX]
-        POP BX
-        ;Compara a string armazenada dígito por dígito com a que foi digitada pelo usuário                  
-        REPE CMPSB
-        JNZ NAO_EH_IGUAL
-                    
-        PUSH BX
+        CMP AL, '1'
+        JZ UM_1
+        CMP AL, '2'
+        JZ DOIS_2
+        CMP AL, '3'
+        JZ TRES_3
+        CMP AL, '4'
+        JZ QUATRO_4
+        CMP AL, '5'
+        JZ CINCO_5
 
-        LEA BX, TABELA + BX
+    JMP PESQUISA_DE_NOME
+
+        UM_1:
+        LEA BX, DADOS + 0
+        JMP APAGA_NOTA
+
+        DOIS_2:
+        LEA BX, DADOS + 22
+        JMP APAGA_NOTA
+
+        TRES_3:
+        LEA BX, DADOS + 44
+        JMP APAGA_NOTA 
+
+        QUATRO_4:
+        LEA BX, DADOS + 66
+        JMP APAGA_NOTA 
+
+        CINCO_5:
+        LEA BX, DADOS + 88
+    
+        APAGA_NOTA:
 
         LEA DX, EDITA_NOTA
-
         PRINT
 
         PULA_LINHA
-
+    
         MOV AH, 01
         XOR SI, SI
-
+        PULA_LINHA
+        LEA DX, OPCAO
+        PRINT
         SELECIONAR_PROVA:
 
             INT 21H                                     
-
+        
             CMP AL, '1'                                 
             JE P1                             
 
@@ -627,54 +658,38 @@ PESQUISA_NOTA PROC
             CMP AL, '3'                                 
             JE P3       
 
-        JMP SELECIONAR_PROVA                         
-            
+        JMP SELECIONAR_PROVA                        
+                    
             P1:
-            ADD SI, 19
+            PULA_LINHA
+            MOV SI, 18
             JMP RECEBEPROVA
 
             P2:
-            ADD SI, 20
+            PULA_LINHA
+            MOV SI, 19
             JMP RECEBEPROVA
 
             P3:
-            ADD SI, 21
+            PULA_LINHA
+            MOV SI, 20
 
             ;O usuário escreve a prova do aluno específico que deseja reescrever, então a entrada numérica é chamada novamente, como também a média que mudará
             RECEBEPROVA:
 
+                PULA_LINHA
+                LEA DX, NOVA_NOTA
+                PRINT
+
                 CALL ENTRADA_NUM
                 MOV [BX+SI], AL
-                POP BX
                 CALL MEDIA
-                                
-            JMP PESQUISA_NOTA_FIM
 
-            ;Caso ela não seja exatamente igual com a linha que está sendo comparada, passa para a próxima até que a matriz armazenada acabe
-            NAO_EH_IGUAL:
-
-                INC AL
-
-            PESQUISA_NOTA_FIM:
-
-                ADD BX, 22
-                POP CX
-                POP DX
-
-    LOOP PESQUISA_DE_NOTA
-        ;Checa se todas as linhas da matriz com nomes foram comparadas    
-        CMP AL, 5
-        JNE FINAL
-                    
-    FINAL:     
-
-        ;Retorna os valores dos registradores           
-        POP SI
-        POP DI
-        POP DX
-        POP CX
-        POP BX
-        POP AX
+                   
+    POP SI
+    POP DX
+    POP BX
+    POP AX  
 
     RET
 
