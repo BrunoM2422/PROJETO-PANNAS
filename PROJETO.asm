@@ -62,7 +62,7 @@ ENDM
 .STACK 0100h
 
 .DATA
-; Numero de caracteres por nome = 15; ? = Numeros de caracteres digiados; 15 dup('$') = Preenche o que não foi digitado com sifrão; 4 dup (?) = Guarda os valores das provas e da média em binário
+    ; Numero de caracteres por nome = 15; ? = Numeros de caracteres digiados; 15 dup('$') = Preenche o que não foi digitado com sifrão; 4 dup (?) = Guarda os valores das provas e da média em binário
     DADOS db  5 dup(15, ?, 15 dup('$'),'$', 4 dup (?)) 
 
     msg1 db "INSIRA O NOME DO ALUNO:$"
@@ -284,7 +284,7 @@ ENTRADA_NUM PROC
 
     RECEBEDEC:
         ;Espera o input com a nota do usuario, caso seja um ENTER pula para o final que retornara os valores para a main
-        ;Caso o valor esteja entre 0 e 9, pula para a entrada decimal, que faz sucessivas multiplicacoes por 10 para fazer a conversao 
+        ;Caso o valor esteja entre 0 e 9, pula para a entrada decimal, que faz sucessivas multiplicacoes por 10 para fazer a conversão para binário
         MOV AH, 01                                  
         INT 21H                                     
 
@@ -314,6 +314,7 @@ ENTRADA_NUM PROC
 
         MOV AX, BX                                  
 
+        ;Retorna os valores dos registradores
         POP BX
         POP SI
 
@@ -554,6 +555,8 @@ PESQUISA_NOME PROC
 PESQUISA_NOME ENDP
 
 PESQUISA_NOTA PROC
+    ;O procedimento de pesquisa de nota primeiramente funciona como uma pesquisa por nome, depois de achar o respectivo aluno, uma prova específica deverá ser editada
+
    ;Guarda os valores dos registradores
     PUSH AX
     PUSH BX
@@ -563,7 +566,7 @@ PESQUISA_NOTA PROC
     PUSH SI
 
     XOR AL, AL
-                
+    ;Contador usado para comparar todos os 5 nomes da matriz com o que foi digitado
     MOV CX, 5
                 
     XOR BX, BX
@@ -571,22 +574,20 @@ PESQUISA_NOTA PROC
     PESQUISA_DE_NOTA:
 
         PUSH DX
-
+        ;Salva o valor do contador de linhas
         PUSH CX
-
+        ;Aponta para o que foi digitado para pesquisa pelo usuário
         LEA SI, PESQUISA_GERAL + 2
-
         LEA DI, DADOS + BX
-
         ADD DI, 2
                     
         PUSH BX
         MOV BX, DX
         MOV CL, [BX]
         POP BX
-                        
+        ;Compara a string armazenada dígito por dígito com a que foi digitada pelo usuário                  
         REPE CMPSB
-        JNZ NOT_EQUAL_NOME
+        JNZ NAO_EH_IGUAL
                     
         PUSH BX
 
@@ -627,6 +628,7 @@ PESQUISA_NOTA PROC
             P3:
             ADD SI, 21
 
+            ;O usuário escreve a prova do aluno específico que deseja reescrever, então a entrada numérica é chamada novamente, como também a média que mudará
             RECEBEPROVA:
 
                 CALL ENTRADA_NUM
@@ -636,7 +638,8 @@ PESQUISA_NOTA PROC
                                 
             JMP PESQUISA_NOTA_FIM
 
-            NOT_EQUAL_NOME:
+            ;Caso ela não seja exatamente igual com a linha que está sendo comparada, passa para a próxima até que a matriz armazenada acabe
+            NAO_EH_IGUAL:
 
                 INC AL
 
@@ -647,11 +650,13 @@ PESQUISA_NOTA PROC
                 POP DX
 
     LOOP PESQUISA_DE_NOTA
-                    
+        ;Checa se todas as linhas da matriz com nomes foram comparadas    
         CMP AL, 5
         JNE FINAL
                     
-    FINAL:                
+    FINAL:     
+
+        ;Retorna os valores dos registradores           
         POP SI
         POP DI
         POP DX
