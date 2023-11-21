@@ -30,8 +30,8 @@ ESPACO MACRO
 
     PUSH AX
     PUSH DX
-    MOV AH, 02
-    MOV DL, "$"
+    LEA DX, ESPACAMENTO
+    MOV AH, 09
     INT 21H
 
     POP DX
@@ -79,15 +79,16 @@ ENDM
              db 10,13,"2 - Editar Nomes"
              db 10,13,"0 - Retornar ao Menu Principal$", 10,13
 
-    PESQUISA_GERAL db 15, ?, 15 dup('$')
+    PESQUISA_GERAL db 15, ?, 15 dup(' ')
 
-    LIMPA_VETOR db 15 dup('$')
+    LIMPA_VETOR db 15 dup(' ')
 
     EDITA_NOTA db "Que prova deseja editar"
             db 10,13,"1 - P1"
             db 10,13,"2 - P2"
             db 10,13,"3 - P3$"
     OPCAO db "Escolha uma opcao:$"
+    ESPACAMENTO db ' $'
 
 .CODE
 
@@ -370,6 +371,13 @@ MEDIA PROC
 MEDIA ENDP
 
 IMPRIME_TABELA PROC 
+
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH SI
+
     ;Aponta BX para DADOS
     LEA BX, DADOS
     ;Seta o contador em 5, numero de linhas da matriz
@@ -377,7 +385,7 @@ IMPRIME_TABELA PROC
 
     SAIDA_DE_LINHA:
         ;Aponta SI para o valor da primera nota que será impressa
-        MOV SI, 18
+        MOV SI, 15
         ;Move o valor do elemento da matriz para imprimir o nome guardado naquela posição
         MOV DX, BX
         ADD DX, 2
@@ -385,8 +393,6 @@ IMPRIME_TABELA PROC
         MOV AH, 09
         ;Imprime o nome
         INT 21H
-
-        ESPACO
 
         ;Guarda o contador de linhas
         PUSH CX
@@ -409,6 +415,12 @@ IMPRIME_TABELA PROC
         PULA_LINHA
 
     LOOP SAIDA_DE_LINHA
+
+    POP SI
+    POP DX
+    POP CX
+    POP BX 
+    POP AX
 
     RET
 
