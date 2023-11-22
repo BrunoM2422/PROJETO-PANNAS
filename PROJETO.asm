@@ -91,17 +91,19 @@ ENDM
             db 10,13,"1 - P1"
             db 10,13,"2 - P2"
             db 10,13,"3 - P3$"
+            
     OPCAO db "Escolha uma opcao:$"
 
     ESPACAMENTO db ' $'
 
-    TITULO db  'NOME',12 DUP (' '),'P1 ','P2 ','P3 ', 'MF$'
+    TITULO db  'NOME',12 DUP (' '),'P1  ','P2  ','P3 ', ' MF$'
 
     NOME db 10,13, "Insira o nome do aluno que deseja alterar a nota:$"
 
     SELECT_ALUNO db 10,13, "Qual aluno voce deseja editar?"
                  db 10,13, "Insira o ID do aluno (1 a 5):$"
     NOVA_NOTA db "Insira a nova nota da prova:$"
+    
     NOVO_NOME db "Insira o novo nome do aluno:$"
 .CODE
 
@@ -460,6 +462,13 @@ SAIDA_DECIMAL PROC
     ;Zera AX que receberá a nota que será convertida para número e então impressa
     XOR AX, AX
     MOV AL, [BX+SI]
+    CMP AL, 10
+    JAE NAO_UNICO
+    ESPACO
+    NAO_UNICO:
+    PREPARADIV:
+    XOR CX, CX                                  ;Zera CX para que possa ser contador
+    MOV BX, 10                                  ;Define BX como divisor sendo 10
 
     DIVISAO:
         ;Contador que será incrementado toda vez que uma divisão acontecer para garantir que todos os dígitos do número serão impressos
@@ -517,7 +526,7 @@ PESQUISA_NOME PROC
 
     PESQUISA_DE_NOME:
         INT 21H
-
+        ;Procura o aluno pelo índice de seu ID para então procurar a sua prova respectiva e editar seu valor na matriz
         CMP AL, '1'
         JZ UM
         CMP AL, '2'
@@ -530,7 +539,8 @@ PESQUISA_NOME PROC
         JZ CINCO
 
     JMP PESQUISA_DE_NOME
-
+        ;Com o ID do aluno, faz uma comparacao para ver qual nome sera apagado e reescrito
+        ;E aponta para a linha da matriz que se encontra o nome
         UM:
         LEA BX, DADOS + 0
         JMP APAGA 
@@ -551,7 +561,7 @@ PESQUISA_NOME PROC
         LEA BX, DADOS + 88
 
         APAGA:
-        ;O segmento a seguir limpa a parte da matriz com o nome comparado para o input ser refeito pelo usuário
+        ;O segmento a seguir limpa o nome comparado para o input ser refeito pelo usuário
         LEA SI, LIMPA_VETOR
 
         LEA DI, DADOS + BX
@@ -559,9 +569,11 @@ PESQUISA_NOME PROC
 
         ;Limpa o nome que estava armazenado com um vetor vazio
         REP MOVSB
+        ;Pede para o usuario o novo nome
         PULA_LINHA
         LEA DX, NOVO_NOME
         PRINT
+        ;Le o novo nome e o coloca no lugar do antigo na matriz
         LEA DX, DADOS + BX
         CALL LEH_NOME
 
@@ -598,7 +610,7 @@ PESQUISA_NOTA PROC
     MOV AH, 01
 
     PESQUISA_DE_NOTA:
-    
+       ;Procura o aluno pelo índice de seu ID para então procurar a sua prova respectiva e editar seu valor na matriz
        INT 21H
 
         CMP AL, '1'
@@ -613,7 +625,7 @@ PESQUISA_NOTA PROC
         JZ CINCO_5
 
     JMP PESQUISA_DE_NOME
-
+        ;Aponta para a linha da matriz que se encontra a nota
         UM_1:
         LEA BX, DADOS + 0
         JMP APAGA_NOTA
@@ -646,7 +658,7 @@ PESQUISA_NOTA PROC
         LEA DX, OPCAO
         PRINT
         SELECIONAR_PROVA:
-
+            ;Pede o input para selecionar a prova que tera a nota editada
             INT 21H                                     
         
             CMP AL, '1'                                 
@@ -659,7 +671,7 @@ PESQUISA_NOTA PROC
             JE P3       
 
         JMP SELECIONAR_PROVA                        
-                    
+            ;Coloca em SI o espaço reservado para receber a nota  
             P1:
             PULA_LINHA
             MOV SI, 18
